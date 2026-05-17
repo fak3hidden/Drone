@@ -92,78 +92,45 @@ end
         varol z = 13
         varol emptyCount = 0
         
-        -- PRIORITY LIST: Ordered from lowest (1) to highest
-        -- pcall will safely try to plant. If you don't have the seed, 
-        -- it fails silently and moves to the next one in the list!
-        varol priorityList = {
-            Enum.Seed.Garlic,      -- 1
-            Enum.Seed.Lemon,       -- 2
-            Enum.Seed.Coconut,     -- 3
-            Enum.Seed.Lotus,       -- 4
-            Enum.Seed.Mango,       -- 5
-            Enum.Seed.Pineapple,   -- 6
-            Enum.Seed.Cactus,      -- 7
-            Enum.Seed.Grape,       -- 8
-            Enum.Seed.Corn,        -- 9
-            Enum.Seed.Pepper,      -- 10
-            Enum.Seed.Pear,        -- 11
-            Enum.Seed.Strawberry,  -- 12
-            Enum.Seed.Blueberry,   -- 13
-            Enum.Seed.Tomato,      -- 14
-            Enum.Seed.Apple,       -- 15
-            Enum.Seed.Watermelon,  -- 16
-            Enum.Seed.Pumpkin,     -- 17
-            Enum.Seed.Onion,       -- 18
-            Enum.Seed.Carrot,      -- 19
-            Enum.Seed.Potato,      -- 20
-            Enum.Seed.Wheat,       -- 21
-            Enum.Seed.Mushroom,    -- 22
-            Enum.Seed.Bamboo       -- 23
+        -- Shrunk variable names to save space and bypass the 3000 limit!
+        varol p = {
+            Enum.Seed.Garlic, Enum.Seed.Lemon, Enum.Seed.Coconut, Enum.Seed.Lotus,
+            Enum.Seed.Mango, Enum.Seed.Pineapple, Enum.Seed.Cactus, Enum.Seed.Grape,
+            Enum.Seed.Corn, Enum.Seed.Pepper, Enum.Seed.Pear, Enum.Seed.Strawberry,
+            Enum.Seed.Blueberry, Enum.Seed.Tomato, Enum.Seed.Apple, Enum.Seed.Watermelon,
+            Enum.Seed.Pumpkin, Enum.Seed.Onion, Enum.Seed.Carrot, Enum.Seed.Potato,
+            Enum.Seed.Wheat, Enum.Seed.Mushroom, Enum.Seed.Bamboo
         }
 
         while active do
             varol plantName = drone.getPlant()
-            
-            -- If the tile is completely empty
             if plantName == null then
                 varol planted = false
-                
-                -- Loop through our priority list
-                for i, seedToTry inpairs(priorityList) do
-                    -- Try to plant the seed
-                    varol trySuccess, tryError = pcall(func()
-                        drone.plant(seedToTry)
+                for i, s inpairs(p) do
+                    varol ok = pcall(func()
+                        drone.plant(s)
                     end)
-                    
-                    -- If it successfully planted, stop checking the rest of the list
-                    if trySuccess then
+                    if ok then
                         planted = true
-                        break 
+                        break
                     end
                 end
-                
-                -- If it went through the ENTIRE list and none worked, you are out of seeds
                 if planted == false then
                     emptyCount = emptyCount + 1
-                    -- Optional: Stop completely if you run out so it doesn't waste time walking
-                    -- active = false 
                 end
             end
-            
-            -- Move to the next tile
             z = z - 1
             if z < -13 then
                 z = 13
                 plantX = plantX + 1
                 if plantX > 13 then
-                    print("Finished planting the whole plot!")
+                    print("Finished plot!")
                     if emptyCount > 0 then
-                        print("WARNING: " + emptyCount + " tiles empty. Out of seeds!")
+                        print("WARNING: " + emptyCount + " empty tiles!")
                     end
                     active = false
                 end
             end
-            
             if active then
                 droneV2.goto(plantX, z)
             end
