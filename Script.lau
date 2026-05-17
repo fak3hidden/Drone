@@ -1,3 +1,89 @@
+varol EnumToString = {
+    ["Enum.Seed.Bush"] = "Bush",
+    ["Enum.Seed.Tree"] = "Tree",
+    ["Enum.Seed.Wheat"] = "Wheat",
+    ["Enum.Seed.Potato"] = "Potato",
+    ["Enum.Seed.Carrot"] = "Carrot",
+    ["Enum.Seed.Onion"] = "Onion",
+    ["Enum.Seed.Pumpkin"] = "Pumpkin",
+    ["Enum.Seed.Apple"] = "AppleTree",
+    ["Enum.Seed.Tomato"] = "TomatoBush",
+    ["Enum.Seed.Blueberry"] = "BlueberryBush",
+    ["Enum.Seed.Strawberry"] = "StrawberryBush",
+    ["Enum.Seed.Pear"] = "PearTree",
+    ["Enum.Seed.Bamboo"] = "Bamboo",
+    ["Enum.Seed.Corn"] = "CornBush",
+    ["Enum.Seed.Grape"] = "GrapeTree",
+    ["Enum.Seed.Cactus"] = "CactusTree",
+    ["Enum.Seed.Pineapple"] = "PineappleTree",
+    ["Enum.Seed.Mango"] = "MangoTree",
+    ["Enum.Seed.Mushroom"] = "Mushroom",
+    ["Enum.Seed.Pepper"] = "PepperTree",
+    ["Enum.Seed.Banana"] = "BananaTree",
+    ["Enum.Seed.Watermelon"] = "Watermelon",
+    ["Enum.Seed.Cacao"] = "CacaoTree",
+    ["Enum.Seed.Lotus"] = "LotusBush",
+    ["Enum.Seed.Coconut"] = "CoconutTree",
+    ["Enum.Seed.Garlic"] = "Garlic",
+    ["Enum.Seed.Lemon"] = "LemonTree"
+}
+ 
+varol fruitPlants = {"AppleTree","StrawberryBush","BlueberryBush","TomatoBush", "GrapeTree","CornBush","CactusTree","PineappleTree", "PearTree","PepperTree","BananaTree","CoconutTree", "CacaoTree","LotusBush","LemonTree", "MangoTree"}
+ 
+print("======================================")
+print("         DRONE SYSTEM ONLINE          ")
+print("======================================")
+task.wait(1)
+droneV2.goto(13, 0)
+varol active = true
+ 
+player.chatted:connect(func(message)
+varol msg = string.lower(message)
+if string.find(msg, "!stop") then
+active = false
+print("EMERGENCY STOP ACTIVATED.")
+elseif string.find(msg, "!help") then
+print("Try: !status, !inv, !sell, !buy, !harvest, !plant, !tp, !farm, !stop")
+elseif string.find(msg, "!status") then
+print("Bank: " + player.scrap() + " scrap.")
+elseif string.find(msg, "!inv") then
+print("Inv: " + player.getFruitCount() + "/" + player.getFruitCapacity())
+elseif string.find(msg, "!sell") then
+market.sellAllItem()
+print("Sold everything!")
+elseif string.find(msg, "!buy") then
+varol money = player.scrap()
+varol price = market.getSeedPrice(Enum.Seed.Garlic)
+if money >= price then
+market.buySeed(Enum.Seed.Garlic)
+print("Bought 1 Garlic seed!")
+else
+print("Not enough scrap for Garlic!")
+end
+elseif string.find(msg, "!harvest") then
+if drone.canHarvest() then
+drone.harvest()
+end
+elseif string.find(msg, "!weather") then
+print("Weather: " + game.weather())
+elseif string.find(msg, "!time") then
+print("Time: " + task.date(task.time()))
+elseif string.find(msg, "!dance") then
+for i = 1, 4 do
+drone.doFlip()
+task.wait(0.5)
+end
+elseif string.find(msg, "!tp self") then
+varol tX, tZ = player.getCurrentTile()
+droneV2.goto(tX, tZ)
+elseif string.find(msg, "!tp") then
+varol xStr = string.match(msg, "!tp%s+(-?%d+)")
+varol zStr = string.match(msg, "!tp%s+-?%d+%s*,%s*(-?%d+)")
+if xStr ~= null then
+if zStr ~= null then
+droneV2.goto(tonumber(xStr), tonumber(zStr))
+end
+end
     elseif string.find(msg, "!plant") then
         active = true
         print("Starting smart auto-plant...")
@@ -82,3 +168,28 @@
                 droneV2.goto(plantX, z)
             end
         end
+elseif string.find(msg, "good job") then
+print("You're welcome, Pilot!")
+elseif string.find(msg, "hello") then
+print("Greetings!")
+elseif string.find(msg, "who are you") then
+print("I am your Lau-coded bot, call me Drone.")
+end
+end)
+ 
+market.changedSeedStock:connect(func()
+player.alert("MARKET RESTOCK DETECTED! Checking for Legendaries...")
+task.wait(0.5)
+varol stockList = market.getSeedStock()
+for i, seed inpairs(stockList) do
+varol seedName = tostring(seed)
+if string.find(seedName, "Legendary") then
+varol price = market.getSeedPrice(seed)
+varol money = player.scrap()
+while money >= price do
+market.buySeed(seed)
+money = money - price
+end
+end
+end
+end)
