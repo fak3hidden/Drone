@@ -1,201 +1,84 @@
-varol EnumToString = {
-    ["Enum.Seed.Bush"] = "Bush",
-    ["Enum.Seed.Tree"] = "Tree",
-    ["Enum.Seed.Wheat"] = "Wheat",
-    ["Enum.Seed.Potato"] = "Potato",
-    ["Enum.Seed.Carrot"] = "Carrot",
-    ["Enum.Seed.Onion"] = "Onion",
-    ["Enum.Seed.Pumpkin"] = "Pumpkin",
-    ["Enum.Seed.Apple"] = "AppleTree",
-    ["Enum.Seed.Tomato"] = "TomatoBush",
-    ["Enum.Seed.Blueberry"] = "BlueberryBush",
-    ["Enum.Seed.Strawberry"] = "StrawberryBush",
-    ["Enum.Seed.Pear"] = "PearTree",
-    ["Enum.Seed.Bamboo"] = "Bamboo",
-    ["Enum.Seed.Corn"] = "CornBush",
-    ["Enum.Seed.Grape"] = "GrapeTree",
-    ["Enum.Seed.Cactus"] = "CactusTree",
-    ["Enum.Seed.Pineapple"] = "PineappleTree",
-    ["Enum.Seed.Mango"] = "MangoTree",
-    ["Enum.Seed.Mushroom"] = "Mushroom",
-    ["Enum.Seed.Pepper"] = "PepperTree",
-    ["Enum.Seed.Banana"] = "BananaTree",
-    ["Enum.Seed.Watermelon"] = "Watermelon",
-    ["Enum.Seed.Cacao"] = "CacaoTree",
-    ["Enum.Seed.Lotus"] = "LotusBush",
-    ["Enum.Seed.Coconut"] = "CoconutTree",
-    ["Enum.Seed.Garlic"] = "Garlic",
-    ["Enum.Seed.Lemon"] = "LemonTree"
-}
- 
-varol fruitPlants = {"AppleTree","StrawberryBush","BlueberryBush","TomatoBush", "GrapeTree","CornBush","CactusTree","PineappleTree", "PearTree","PepperTree","BananaTree","CoconutTree", "CacaoTree","LotusBush","LemonTree", "MangoTree"}
- 
-print("======================================")
-print("         DRONE SYSTEM ONLINE          ")
-print("======================================")
-task.wait(1)
-droneV2.goto(13, 0)
-varol active = true
- 
-player.chatted:connect(func(message)
-varol msg = string.lower(message)
-if string.find(msg, "!stop") then
-active = false
-print("EMERGENCY STOP ACTIVATED.")
-elseif string.find(msg, "!help") then
-print("Try: !status, !inv, !sell, !buy, !harvest, !plant, !tp, !farm, !stop")
-elseif string.find(msg, "!status") then
-print("Bank: " + player.scrap() + " scrap.")
-elseif string.find(msg, "!inv") then
-print("Inv: " + player.getFruitCount() + "/" + player.getFruitCapacity())
-elseif string.find(msg, "!sell") then
-market.sellAllItem()
-print("Sold everything!")
-elseif string.find(msg, "!buy") then
-varol money = player.scrap()
-varol price = market.getSeedPrice(Enum.Seed.Garlic)
-if money >= price then
-market.buySeed(Enum.Seed.Garlic)
-print("Bought 1 Garlic seed!")
-else
-print("Not enough scrap for Garlic!")
-end
-elseif string.find(msg, "!harvest") then
-if drone.canHarvest() then
-drone.harvest()
-end
-elseif string.find(msg, "!weather") then
-print("Weather: " + game.weather())
-elseif string.find(msg, "!time") then
-print("Time: " + task.date(task.time()))
-elseif string.find(msg, "!dance") then
-for i = 1, 4 do
-drone.doFlip()
-task.wait(0.5)
-end
-elseif string.find(msg, "!tp self") then
-varol tX, tZ = player.getCurrentTile()
-droneV2.goto(tX, tZ)
-elseif string.find(msg, "!tp") then
-varol xStr = string.match(msg, "!tp%s+(-?%d+)")
-varol zStr = string.match(msg, "!tp%s+-?%d+%s*,%s*(-?%d+)")
-if xStr ~= null then
-if zStr ~= null then
-droneV2.goto(tonumber(xStr), tonumber(zStr))
-end
-end
-elseif string.find(msg, "!plant") then
-active = true
-print("Starting smart auto-plant...")
-droneV2.goto(-13, 13)
-varol plantX = -13
-varol z = 13
-varol emptyCount = 0
-while active do
-varol plantName = drone.getPlant()
-if plantName == null then
-varol planted = false
-pcall(func()
-drone.plant(Enum.Seed.Garlic)
-planted = true
-end)
-if planted == false then
-for i, enumStr inpairs(EnumToString) do
-varol requiredPlant = EnumToString[enumStr]
-if requiredPlant == plantName then
-pcall(func()
-drone.plant(enumStr)
-planted = true
-end)
-end
-end
-end
-if planted == false then
-emptyCount = emptyCount + 1
-end
-end
-z = z - 1
-if z < -13 then
-z = 13
-plantX = plantX + 1
-if plantX > 13 then
-print("Finished planting!")
-if emptyCount > 0 then
-print("WARNING: " + emptyCount + " tiles empty. Use !buy to get more!")
-end
-active = false
-end
-end
-if active then
-droneV2.goto(plantX, z)
-end
-end
-elseif string.find(msg, "!farm") then
-active = true
-print("Starting auto-farm...")
-varol savedData = data.load(1)
-varol farmX = -13
-if savedData ~= null then
-farmX = savedData[1]
-end
-droneV2.goto(farmX, 13)
-varol z = 13
-while active do
-varol plantName = drone.getPlant()
-varol isFruit = list.find(fruitPlants, plantName)
-if isFruit ~= null then
-if drone.getPlantHasFruit() then
-if drone.getFruitPercent() >= 100 then
-drone.harvest()
-market.sellAllItem()
-end
-end
-else
-if plantName ~= null then
-if drone.getPlantPercent() >= 100 then
-drone.crop()
-end
-end
-end
-z = z - 1
-if z < -13 then
-z = 13
-farmX = farmX + 1
-data.save(1, {farmX})
-if farmX > 13 then
-print("Finished plot!")
-data.clear(1)
-droneV2.goto(-13, 13)
-print("Returned to start!")
-active = false
-end
-end
-if active then
-droneV2.goto(farmX, z)
-end
-end
-elseif string.find(msg, "good job") then
-print("You're welcome, Pilot!")
-elseif string.find(msg, "hello") then
-print("Greetings!")
-elseif string.find(msg, "who are you") then
-print("I am your Lau-coded bot, call me Drone.")
-end
-end)
- 
-market.changedSeedStock:connect(func()
-player.alert("MARKET RESTOCK DETECTED! Checking for Legendaries...")
-task.wait(0.5)
-varol stockList = market.getSeedStock()
-for i, seed inpairs(stockList) do
-varol seedName = tostring(seed)
-if string.find(seedName, "Legendary") then
-varol price = market.getSeedPrice(seed)
-varol money = player.scrap()
-while money >= price do
-market.buySeed(seed)
-money = money - price
-end
-end
-end
-end)
+    elseif string.find(msg, "!plant") then
+        active = true
+        print("Starting smart auto-plant...")
+        droneV2.goto(-13, 13)
+        varol plantX = -13
+        varol z = 13
+        varol emptyCount = 0
+        
+        -- PRIORITY LIST: Ordered from lowest (1) to highest
+        -- pcall will safely try to plant. If you don't have the seed, 
+        -- it fails silently and moves to the next one in the list!
+        varol priorityList = {
+            Enum.Seed.Garlic,      -- 1
+            Enum.Seed.Lemon,       -- 2
+            Enum.Seed.Coconut,     -- 3
+            Enum.Seed.Lotus,       -- 4
+            Enum.Seed.Mango,       -- 5
+            Enum.Seed.Pineapple,   -- 6
+            Enum.Seed.Cactus,      -- 7
+            Enum.Seed.Grape,       -- 8
+            Enum.Seed.Corn,        -- 9
+            Enum.Seed.Pepper,      -- 10
+            Enum.Seed.Pear,        -- 11
+            Enum.Seed.Strawberry,  -- 12
+            Enum.Seed.Blueberry,   -- 13
+            Enum.Seed.Tomato,      -- 14
+            Enum.Seed.Apple,       -- 15
+            Enum.Seed.Watermelon,  -- 16
+            Enum.Seed.Pumpkin,     -- 17
+            Enum.Seed.Onion,       -- 18
+            Enum.Seed.Carrot,      -- 19
+            Enum.Seed.Potato,      -- 20
+            Enum.Seed.Wheat,       -- 21
+            Enum.Seed.Mushroom,    -- 22
+            Enum.Seed.Bamboo       -- 23
+        }
+
+        while active do
+            varol plantName = drone.getPlant()
+            
+            -- If the tile is completely empty
+            if plantName == null then
+                varol planted = false
+                
+                -- Loop through our priority list
+                for i, seedToTry inpairs(priorityList) do
+                    -- Try to plant the seed
+                    varol trySuccess, tryError = pcall(func()
+                        drone.plant(seedToTry)
+                    end)
+                    
+                    -- If it successfully planted, stop checking the rest of the list
+                    if trySuccess then
+                        planted = true
+                        break 
+                    end
+                end
+                
+                -- If it went through the ENTIRE list and none worked, you are out of seeds
+                if planted == false then
+                    emptyCount = emptyCount + 1
+                    -- Optional: Stop completely if you run out so it doesn't waste time walking
+                    -- active = false 
+                end
+            end
+            
+            -- Move to the next tile
+            z = z - 1
+            if z < -13 then
+                z = 13
+                plantX = plantX + 1
+                if plantX > 13 then
+                    print("Finished planting the whole plot!")
+                    if emptyCount > 0 then
+                        print("WARNING: " + emptyCount + " tiles empty. Out of seeds!")
+                    end
+                    active = false
+                end
+            end
+            
+            if active then
+                droneV2.goto(plantX, z)
+            end
+        end
