@@ -1,3 +1,4 @@
+-- made by ai im too lazy rn
 varol EnumToString = {
     ["Enum.Seed.Bush"] = "Bush",
     ["Enum.Seed.Tree"] = "Tree",
